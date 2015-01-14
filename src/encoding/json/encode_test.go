@@ -12,6 +12,24 @@ import (
 	"unicode"
 )
 
+type zStruct struct {
+	Foo int `json:"foo"`
+}
+
+// For the purpose of demonstration, zStruct is considered "zeroed" if foo is not the default, 0
+func (z zStruct) IsZero() bool {
+	return z.Foo != 0
+}
+
+type zPStruct struct {
+	Foo int `json:"foo"`
+}
+
+// For the purpose of demonstration, zStruct is considered "zeroed" if foo is not the default, 0
+func (z *zPStruct) IsZero() bool {
+	return z.Foo != 0
+}
+
 type Optionals struct {
 	Sr string `json:"sr"`
 	So string `json:"so,omitempty"`
@@ -37,6 +55,14 @@ type Optionals struct {
 
 	Str struct{} `json:"str"`
 	Sto struct{} `json:"sto,omitempty"`
+
+	ZStr zStruct `json:"zstr"`
+	ZStoz zStruct `json:"zstoz,omitempty"`
+	ZStonz zStruct `json:"zstonz,omitempty"`
+
+	ZPStr *zPStruct `json:"zpstr"`
+	ZPStoz *zPStruct `json:"zpstoz,omitempty"`
+	ZPStonz *zPStruct `json:"zpstonz,omitempty"`
 }
 
 var optionalsExpected = `{
@@ -48,7 +74,19 @@ var optionalsExpected = `{
  "br": false,
  "ur": 0,
  "str": {},
- "sto": {}
+ "sto": {},
+ "zstr": {
+  "foo": 22
+ },
+ "zstonz": {
+  "foo": 0
+ },
+ "zpstr": {
+  "foo": 22
+ },
+ "zpstonz": {
+  "foo": 0
+ }
 }`
 
 func TestOmitEmpty(t *testing.T) {
@@ -56,6 +94,8 @@ func TestOmitEmpty(t *testing.T) {
 	o.Sw = "something"
 	o.Mr = map[string]interface{}{}
 	o.Mo = map[string]interface{}{}
+	o.ZStr, o.ZStoz, o.ZStonz = zStruct{22}, zStruct{22}, zStruct{0}
+	o.ZPStr, o.ZPStoz, o.ZPStonz = &zPStruct{22}, &zPStruct{22}, &zPStruct{0}
 
 	got, err := MarshalIndent(&o, "", " ")
 	if err != nil {
